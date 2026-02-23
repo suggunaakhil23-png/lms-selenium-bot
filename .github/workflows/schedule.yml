@@ -23,5 +23,8 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run automation
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASS: ${{ secrets.GMAIL_APP_PASS }}
         run: |
           python main.py
