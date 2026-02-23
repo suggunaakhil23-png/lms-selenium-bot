@@ -1,5 +1,4 @@
 import time
-import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -9,9 +8,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
 
-
-sender_email = os.environ["GMAIL_USER"]
-app_password = os.environ["GMAIL_APP_PASS"]
+sender_email = "suggunaakhil@gmail.com"
+app_password = "nvgbvitrypngzkyu"
 
 
 def run_lms(username, password, receiver_email):
@@ -69,32 +67,20 @@ def run_lms(username, password, receiver_email):
 
 if __name__ == "__main__":
 
-    students = [
-        {
-            "username": os.environ["LMS_USER_1"],
-            "password": os.environ["LMS_PASS_1"],
-            "email": os.environ["LMS_EMAIL_1"]
-        },
-        {
-            "username": os.environ["LMS_USER_2"],
-            "password": os.environ["LMS_PASS_2"],
-            "email": os.environ["LMS_EMAIL_2"]
-        }
-    ]
+    with open("credentials.txt", "r", encoding="utf-8") as file:
+        users = file.readlines()
 
-    for student in students:
+    for user in users:
 
-        print(f"Running for {student['username']}")
+        username, password, email = user.strip().split(",")
 
-        results = run_lms(
-            student["username"],
-            student["password"],
-            student["email"]
-        )
+        print(f"Running for {username}")
+
+        results = run_lms(username, password, email)
 
         message = MIMEMultipart()
         message["From"] = sender_email
-        message["To"] = student["email"]
+        message["To"] = email
         message["Subject"] = "LMS Overdue Assignments"
 
         body = ""
@@ -116,4 +102,4 @@ if __name__ == "__main__":
         server.send_message(message)
         server.quit()
 
-        print(f"Email sent to {student['email']}")
+        print(f"Email sent to {email}")
