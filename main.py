@@ -1,5 +1,5 @@
 import time
-from datetime import datetime
+import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -8,9 +8,12 @@ from selenium.webdriver.chrome.options import Options
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
-import os
+
+
 sender_email = os.environ["GMAIL_USER"]
-app_password = os.environ["GMAIL_APP_PASS"] 
+app_password = os.environ["GMAIL_APP_PASS"]
+
+
 def run_lms(username, password, receiver_email):
 
     chrome_options = Options()
@@ -61,29 +64,37 @@ def run_lms(username, password, receiver_email):
             })
 
     driver.quit()
-
     return announcements
 
 
 if __name__ == "__main__":
 
-    with open("credentials.txt", "r", encoding="utf-8") as file:
-        users = file.readlines()
+    students = [
+        {
+            "username": os.environ["LMS_USER_1"],
+            "password": os.environ["LMS_PASS_1"],
+            "email": os.environ["LMS_EMAIL_1"]
+        },
+        {
+            "username": os.environ["LMS_USER_2"],
+            "password": os.environ["LMS_PASS_2"],
+            "email": os.environ["LMS_EMAIL_2"]
+        }
+    ]
 
-    for user in users:
+    for student in students:
 
-        username, password, email = user.strip().split(",")
+        print(f"Running for {student['username']}")
 
-        print(f"Running for {username}")
-
-        results = run_lms(username, password, email)
-
-        sender_email = "suggunaakhil@gmail.com"
-        app_password = "nvgbvitrypngzkyu"
+        results = run_lms(
+            student["username"],
+            student["password"],
+            student["email"]
+        )
 
         message = MIMEMultipart()
         message["From"] = sender_email
-        message["To"] = email
+        message["To"] = student["email"]
         message["Subject"] = "LMS Overdue Assignments"
 
         body = ""
@@ -105,4 +116,4 @@ if __name__ == "__main__":
         server.send_message(message)
         server.quit()
 
-        print(f"Email sent to {email}")
+        print(f"Email sent to {student['email']}")
