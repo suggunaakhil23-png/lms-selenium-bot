@@ -1,3 +1,5 @@
+import time
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -6,7 +8,6 @@ from selenium.webdriver.chrome.options import Options
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
-import time
 
 
 def run_lms(username, password, receiver_email):
@@ -47,11 +48,9 @@ def run_lms(username, password, receiver_email):
             continue
 
         if tag == "a":
-            try:
-                container = item.find_element(By.XPATH, "ancestor::*[self::li or self::div][1]")
-                if "overdue" not in container.text.lower():
-                    continue
-            except:
+            container = item.find_element(By.XPATH, "ancestor::*[self::li or self::div][1]")
+
+            if "overdue" not in container.text.lower():
                 continue
 
             announcements.append({
@@ -62,31 +61,47 @@ def run_lms(username, password, receiver_email):
 
     driver.quit()
 
-    sender_email = "suggunaakhil@gmail.com"
-    app_password = "nvgbvitrypngzkyu"
+    return announcements
 
-    message = MIMEMultipart()
-    message["From"] = sender_email
-    message["To"] = receiver_email
-    message["Subject"] = "LMS Overdue Assignments"
 
-    body = ""
+if __name__ == "__main__":
 
-    for item in announcements:
-        body += f"Title: {item['title']}\n"
-        body += f"Date: {item['date']}\n"
-        body += f"Submission Link: {item['link']}\n"
-        body += "-" * 60 + "\n"
+    with open("credentials.txt", "r", encoding="utf-8") as file:
+        users = file.readlines()
 
-    if not announcements:
-        body = "No overdue assignments found."
+    for user in users:
 
-    message.attach(MIMEText(body, "plain"))
+        username, password, email = user.strip().split(",")
 
-    server = smtplib.SMTP("smtp.gmail.com", 587)
-    server.starttls()
-    server.login(sender_email, app_password)
-    server.send_message(message)
-    server.quit()
+        print(f"Running for {username}")
 
-    return "Automation Completed"
+        results = run_lms(username, password, email)
+
+        sender_email = "suggunaakhil@gmail.com"
+        app_password = "nvgbvitrypngzkyu"
+
+        message = MIMEMultipart()
+        message["From"] = sender_email
+        message["To"] = email
+        message["Subject"] = "LMS Overdue Assignments"
+
+        body = ""
+
+        if not results:
+            body = "No overdue assignments found."
+        else:
+            for item in results:
+                body += f"Title: {item['title']}\n"
+                body += f"Date: {item['date']}\n"
+                body += f"Link: {item['link']}\n"
+                body += "-" * 40 + "\n"
+
+        message.attach(MIMEText(body, "plain"))
+
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, app_password)
+        server.send_message(message)
+        server.quit()
+
+        print(f"Email sent to {email}")

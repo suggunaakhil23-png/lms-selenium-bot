@@ -1,31 +1,22 @@
-from flask import Flask, render_template
-from apscheduler.schedulers.background import BackgroundScheduler
-from main import run_lms
-import pytz
+from flask import Flask, render_template, request
 from datetime import datetime
 
 app = Flask(__name__)
-
-def scheduled_job():
-    print("Running scheduled LMS automation...")
-    run_lms("2410040134", "Akhil@2006", "2410040134@klh.edu.in")
-    run_lms("2410040120", "Yasar_0806", "yasarshaik0806@gmail.com")
-    print("Automation finished.")
-
-scheduler = BackgroundScheduler(timezone="Asia/Kolkata")
-
-scheduler.add_job(
-    scheduled_job,
-    trigger='cron',
-    hour=8,
-    minute=0
-)
-
-scheduler.start()
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
+@app.route("/save", methods=["POST"])
+def save():
+    username = request.form["username"]
+    password = request.form["password"]
+    email = request.form["email"]
+
+    with open("credentials.txt", "a", encoding="utf-8") as file:
+        file.write(f"{username},{password},{email}\n")
+
+    return "User Saved Successfully"
+
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
