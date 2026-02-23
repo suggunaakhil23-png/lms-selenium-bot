@@ -8,8 +8,9 @@ from selenium.webdriver.chrome.options import Options
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
-
-
+import os
+sender_email = os.environ["GMAIL_USER"]
+app_password = os.environ["GMAIL_APP_PASS"] 
 def run_lms(username, password, receiver_email):
 
     chrome_options = Options()
