@@ -2,38 +2,27 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import smtplib
+from selenium.webdriver.chrome.options import Options
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import smtplib
 import time
 
-students = [
-    {
-        "username": "2410040134",
-        "password": "Akhil@2006",
-        "email": "2410040134@klh.edu.in"
-    },
-    {
-        "username": "2410040120",
-        "password": "Yasar_0806",
-        "email": "yasarshaik0806@gmail.com"
-    }
-]
 
-sender_email = "suggunaakhil@gmail.com"
-app_password = "nvgbvitrypngzkyu"
+def run_lms(username, password, receiver_email):
 
-for student in students:
+    chrome_options = Options()
+    chrome_options.add_argument("--headless=new")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
 
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument("--start-maximized")
     driver = webdriver.Chrome(options=chrome_options)
     wait = WebDriverWait(driver, 40)
 
     driver.get("https://lms.klh.edu.in/my/")
 
-    wait.until(EC.presence_of_element_located((By.NAME, "username"))).send_keys(student["username"])
-    driver.find_element(By.NAME, "password").send_keys(student["password"])
+    wait.until(EC.presence_of_element_located((By.NAME, "username"))).send_keys(username)
+    driver.find_element(By.NAME, "password").send_keys(password)
     driver.find_element(By.ID, "loginbtn").click()
 
     wait.until(EC.url_contains("/my/"))
@@ -65,26 +54,20 @@ for student in students:
             except:
                 continue
 
-            try:
-                title = container.find_element(
-                    By.XPATH,
-                    ".//small[contains(@class,'mb-0')]"
-                ).text.strip()
-            except:
-                title = item.text.strip()
-
             announcements.append({
-                "title": title,
+                "title": item.text.strip(),
                 "date": current_date if current_date else "N/A",
-                "status": "Overdue",
                 "link": item.get_attribute("href")
             })
 
     driver.quit()
 
+    sender_email = "suggunaakhil@gmail.com"
+    app_password = "nvgbvitrypngzkyu"
+
     message = MIMEMultipart()
     message["From"] = sender_email
-    message["To"] = student["email"]
+    message["To"] = receiver_email
     message["Subject"] = "LMS Overdue Assignments"
 
     body = ""
@@ -92,7 +75,6 @@ for student in students:
     for item in announcements:
         body += f"Title: {item['title']}\n"
         body += f"Date: {item['date']}\n"
-        body += f"Status: {item['status']}\n"
         body += f"Submission Link: {item['link']}\n"
         body += "-" * 60 + "\n"
 
@@ -107,4 +89,4 @@ for student in students:
     server.send_message(message)
     server.quit()
 
-print("Emails Sent Successfully")
+    return "Automation Completed"
